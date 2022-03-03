@@ -1,0 +1,2 @@
+是否將threading放在main中就好
+將rqe(date)，arr(date)打包到一個須執行的threading

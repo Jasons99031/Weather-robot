@@ -1,0 +1,108 @@
+
+from bs4 import BeautifulSoup
+import json
+import os
+import time
+import threading
+
+
+
+
+class arr(threading.Thread):
+    
+    def __init__(self,dete):
+        threading.Thread.__init__(self) #要用threading funtion 要叫run
+        self.date=dete
+
+    def date_read(self):
+
+        threads = [] #並排運算的陣列
+
+        with open('input.txt','r',encoding='utf-8') as r:#讀取date所產生的txt
+            R=r.read()                                       #
+            P=R.split(',')                                   #用，篩選
+        for i in range(0,len(P)):
+            date=P[i]
+            
+            threads.append(arr(date))
+            threads[i].start()       
+
+    def run(self):
+
+        while 1:#因為並列下載是並列執行有可能還沒載好前面的，需要先等待
+            try:
+                with open('raw_data\\text' + self.date + '.txt','r',encoding='utf-8') as a:
+                    html = a.read()
+                    arr = BeautifulSoup(html,'html.parser')
+                    t = arr.find_all('th')
+                    q = arr.find_all('td')
+                break   
+            except:
+                print('wait')
+                time.sleep(0.1)
+
+        R=0
+        i=0
+        File=dict()
+        keys=[]
+        for key in t:
+            
+            K=key.string
+            
+
+            if  K=='ObsTime':
+                R=1
+            
+
+            if R:
+                
+                
+                keys.append(K)
+                f=dict([[K,[]]])
+                File.update(f)
+                
+        #print(File)
+
+
+
+
+
+        R=0
+        i=0
+
+        #print(keys)
+
+        for v in q:
+            if v.string == '01':#找資料的開頭
+                R=1
+            if R:
+
+
+
+
+                try:    #將資料轉成數字
+                    T = float(v.string)
+                except ValueError:
+                    T = str(v.string)
+                    T=T.strip('\xa0')
+                File[keys[i]].append(T)
+
+
+                #print(v.string)
+                i+=1
+            if i>16:
+                i=0
+
+        
+        data = json.dumps(File)
+        
+
+        with open('json_data\\'+self.date+'.json','w',encoding='utf-8' ) as x:
+            x.write(data)
+
+        while 1:    
+            try:
+                os.remove('raw_data\\text' + self.date + '.txt')
+                break 
+            except:
+                time.sleep(0.1)
